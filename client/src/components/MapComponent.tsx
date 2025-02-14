@@ -22,7 +22,7 @@ const MapComponent: React.FC = () => {
   const { socket } = useSocketStore();
   const [guards, setGuards] = useState<Guard[]>([]);
   const { orgId } = useParams<{ orgId: string }>();
-  const [myLocation, setMyLocation] = useState<{ orgId: string; lat: number; lng: number, radius: number } | null>(null);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (!socket) return;
@@ -32,10 +32,10 @@ const MapComponent: React.FC = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setMyLocation({ orgId : orgId as string,lat: latitude, lng: longitude, radius: 0.1 });
+          setMyLocation({lat: latitude, lng: longitude });
 
           // Send location to server
-          socket.emit("joinGuard", { lat: latitude, lng: longitude });
+          socket.emit("joinGuard", {orgId : orgId as string,lat: latitude, lng: longitude, radius: 0.1 });
         },
         (error) => console.error("Error getting location:", error),
         { enableHighAccuracy: true }
