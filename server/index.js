@@ -43,7 +43,20 @@ let guards = [
   { id: 3, lat: 29.6139, lng: 79.209 } // Bangalore
 ];
 
+// Broadcast updated locations every 2 seconds
+// setInterval(() => {
+//   guards = guards.map(guard => ({
+//     ...guard,
+//     lat: guard.lat + (Math.random() - 0.5) * 0.01, // Simulate movement
+//     lng: guard.lng + (Math.random() - 0.5) * 0.01
+//   }));
+  
+//   io.emit("guardLocations", guards);
+// }, 1000);
+
+
 // Socket connection handling
+
 io.on("connection", (socket) => {
   console.log("A new guard connected:", socket.id);
 
@@ -55,6 +68,12 @@ io.on("connection", (socket) => {
       lat,
       lng
     };
+
+
+    guards.push(newGuard);
+    io.emit("updateGuards", guards);
+  });
+
     guards.push(newGuard);
     io.emit("updateGuards", guards);
   });
@@ -64,6 +83,7 @@ io.on("connection", (socket) => {
     guards = guards.map((guard) =>
       guard.id === socket.id ? { ...guard, lat, lng } : guard
     );
+
     io.emit("updateGuards", guards);
   });
 
@@ -72,6 +92,7 @@ io.on("connection", (socket) => {
     console.log(`Guard ${socket.id} disconnected`);
     guards = guards.filter((guard) => guard.id !== socket.id);
     io.emit("removeGuard", socket.id);
+
   });
 });
 
@@ -92,6 +113,7 @@ process.on('uncaughtException', (error) => {
   // Graceful shutdown
   server.close(() => {
     process.exit(1);
+
   });
 });
 
