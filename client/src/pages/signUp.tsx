@@ -1,8 +1,7 @@
 // src/components/SignUp.tsx
 import React, { useState } from 'react';
-import { supabase } from '../libs/helper/superBaseClient';
 import { useNavigate } from 'react-router-dom';
-
+import { supabase } from '../lib/helper/superBaseClient';
 const SignUp: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
