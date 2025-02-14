@@ -36,6 +36,8 @@ export const initSocketServer = (io) => {
 
       console.log(`Guard ${socket.id} joined Room: ${roomId}`);
 
+      // await simulateGuardMovement(socket, io);
+
       // Send updated list of guards to the room
       io.to(roomId).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === orgId));
     });
@@ -60,6 +62,8 @@ export const initSocketServer = (io) => {
       io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
     });
 
+
+
     // Handle disconnect
     socket.on("disconnect", () => {
       const guard = guards[socket.id];
@@ -71,3 +75,31 @@ export const initSocketServer = (io) => {
     });
   });
 };
+
+// function simulateGuardMovement(socket, io) {
+//   let guard = guards[socket.id];
+//   if (!guard) return;
+
+//   const interval = setInterval(() => {
+//     if (!guards[socket.id]) {
+//       clearInterval(interval);
+//       return;
+//     }
+
+//     // Move guard slightly
+//     guard.lat += (Math.random() - 0.5) * 0.1; // Small movement
+//     guard.lng += (Math.random() - 0.5) * 0.1;
+
+//     // Emit location update
+//     io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+
+//     // Check if out of bounds
+//     const distance = Math.sqrt((guard.lat - guard.lat) ** 2 + (guard.lng - guard.lng) ** 2);
+//     if (distance > guard.radius) {
+//       io.to(organizations[guard.orgId]).emit("alert", {
+//         message: `${guard.name} has moved outside the allowed area! 🚨`,
+//       });
+//       clearInterval(interval); // Stop further movement after alert
+//     }
+//   }, 1000); // Moves every 5 seconds
+// }
