@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                      Int                      @id @default(autoincrement())
+  email                   String                   @unique
+  name                    String
+  password                String
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now())
+
+  sentAlerts              Alert[]                  @relation("UserAlerts")
+  backgroundCheckRequests BackgroundCheckRequest[] @relation("UserBackgroundRequests")
+  chatMessages            ChatMessage[]            @relation("UserChatMessages")
+  ownedOrganizations      Organization[]           @relation("OwnedOrganizations")
+  organizations           OrganizationMember[]
+  reviews                 Review[]
+}
+
+
+model Organization {
+  id                      Int                      @id @default(autoincrement())
+  name                    String
+  joinLink                String                   @unique
+  joinPassword            String
+  ownerId                 Int
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now())
+  alerts                  Alert[]
+  backgroundCheckRequests BackgroundCheckRequest[]
+  chatMessages            ChatMessage[]
+  guards                  Guard[]
+  owner                   User                     @relation("OwnedOrganizations", fields: [ownerId], references: [id])
+  members                 OrganizationMember[]
+  reviews                 Review[]
+  shifts                  Shift[]
+}
+
+model OrganizationMember {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  userId         Int
+  joinedAt       DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+}
+
+model Guard {
+  id                      Int                      @id @default(autoincrement())
+  organizationId          Int
+  email                   String                   @unique
+  name                    String
+  contact                 String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @default(now())
+  attendances             Attendance[]
+  backgroundCheckRequests BackgroundCheckRequest[]
+  chatMessages            ChatMessage[]            @relation("GuardChatMessages")
+  organization            Organization             @relation(fields: [organizationId], references: [id])
+  locationHistory         GuardLocationHistory[]
+  personalInfo            GuardPersonalInfo?
+  reviews                 Review[]
+  shiftAssignments        ShiftAssignment[]
+}
+
+model GuardPersonalInfo {
+  id                Int       @id @default(autoincrement())
+  guardId           Int       @unique
+  dateOfBirth       DateTime?
+  height            Float?
+  weight            Float?
+  contactNumber     String?
+  residence         String?
+  pastWorkHistory   Json?
+  currentDeployment String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now())
+  guard             Guard     @relation(fields: [guardId], references: [id])
+}
+
+model GuardLocationHistory {
+  id         Int      @id @default(autoincrement())
+  guardId    Int
+  shiftId    Int?
+  latitude   Float
+  longitude  Float
+  recordedAt DateTime @default(now())
+  guard      Guard    @relation(fields: [guardId], references: [id])
+  shift      Shift?   @relation("ShiftLocationHistories", fields: [shiftId], references: [id])
+}
+
+model Shift {
+  id                Int                    @id @default(autoincrement())
+  organizationId    Int
+  name              String
+  startTime         DateTime
+  endTime           DateTime
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @default(now())
+  attendances       Attendance[]           @relation("ShiftAttendances")
+  locationHistories GuardLocationHistory[] @relation("ShiftLocationHistories")
+  organization      Organization           @relation(fields: [organizationId], references: [id])
+  shiftAssignments  ShiftAssignment[]
+}
+
+model ShiftAssignment {
+  id               Int      @id @default(autoincrement())
+  shiftId          Int
+  guardId          Int
+  assignedAt       DateTime @default(now())
+  allowedLatitude  Float
+  allowedLongitude Float
+  allowedRadius    Float
+  guard            Guard    @relation(fields: [guardId], references: [id])
+  shift            Shift    @relation(fields: [shiftId], references: [id])
+
+  @@unique([shiftId, guardId])
+}
+
+model Attendance {
+  id        Int       @id @default(autoincrement())
+  guardId   Int
+  shiftId   Int?
+  checkIn   DateTime?
+  checkOut  DateTime?
+  date      DateTime
+  createdAt DateTime  @default(now())
+  guard     Guard     @relation(fields: [guardId], references: [id])
+  shift     Shift?    @relation("ShiftAttendances", fields: [shiftId], references: [id])
+}
+
+model Alert {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  description    String
+  alertType      String
+  createdAt      DateTime     @default(now())
+  seen           Boolean      @default(false)
+  senderId       Int?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  sender         User?        @relation("UserAlerts", fields: [senderId], references: [id])
+}
+
+model BackgroundCheckRequest {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  guardId        Int
+  requestedById  Int
+  status         String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now())
+  guard          Guard        @relation(fields: [guardId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  requestedBy    User         @relation("UserBackgroundRequests", fields: [requestedById], references: [id])
+}
+
+model Review {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  guardId        Int
+  submittedById  Int
+  rating         Int
+  comment        String?
+  createdAt      DateTime     @default(now())
+  guard          Guard        @relation(fields: [guardId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  submittedBy    User         @relation(fields: [submittedById], references: [id])
+}
+
+model ChatMessage {
+  id             Int          @id @default(autoincrement())
+  organizationId Int
+  message        String
+  createdAt      DateTime     @default(now())
+  senderUserId   Int?
+  senderGuardId  Int?
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  senderGuard    Guard?       @relation("GuardChatMessages", fields: [senderGuardId], references: [id])
+  senderUser     User?        @relation("UserChatMessages", fields: [senderUserId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+  POLICE
+}
