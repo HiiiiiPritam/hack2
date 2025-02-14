@@ -12,14 +12,16 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.22.13",
     "@prisma/client": "^6.3.1",
+    "@supabase/supabase-js": "^2.48.1",
     "axios": "^1.7.7",
     "framer-motion": "^11.5.4",
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-leaflet": "^4.2.1",
-    "react-router-dom": "^6.26.1",
-    "socket.io-client": "^4.8.1"
+    "react-router-dom": "^6.29.0",
+    "socket.io-client": "^4.8.1",
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

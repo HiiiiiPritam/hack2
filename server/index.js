@@ -5,7 +5,6 @@ import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 import { initSocketServer } from "./socket/socketServer.js";
-
 dotenv.config();
 
 // Express app setup
@@ -15,7 +14,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app
 
 // Basic error handling middleware
 app.use((err, req, res, next) => {
@@ -29,7 +27,7 @@ const server = http.createServer(app);
 // Socket.io setup with error handling
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5174",
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   },
   pingTimeout: 60000,

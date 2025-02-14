@@ -1,7 +1,8 @@
+// src/components/Header.tsx
 import React, { useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, UserButton } from '@clerk/clerk-react';
 
-function Header() {
+const Header: React.FC = () => {
   const { user, isLoaded } = useUser();
 
   useEffect(() => {
@@ -10,7 +11,7 @@ function Header() {
       fetch('/api/sync-user', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         credentials: 'include', // Ensure cookies are sent if required
       })
@@ -23,10 +24,16 @@ function Header() {
   }, [isLoaded, user]);
 
   return (
-    <div>
-      Header
-    </div>
+    <header className="flex items-center justify-between p-4 bg-blue-600 text-white">
+      <div className="text-xl font-bold">
+        Header
+      </div>
+      <div>
+        {/* UserButton renders a profile avatar and dropdown */}
+        <UserButton />
+      </div>
+    </header>
   );
-}
+};
 
 export default Header;
