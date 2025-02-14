@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
-import { io } from "socket.io-client";
+import io from "socket.io-client";
 import "leaflet/dist/leaflet.css";
 
 // Connect to the Socket.io server
