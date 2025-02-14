@@ -1,46 +1,65 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const cors = require("cors");
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import initSocketServer from "./socket/socketServer";
+import dotenv from "dotenv";
 
+// Express app setup
 const app = express();
-app.use(cors()); // Enable CORS for frontend communication
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:5174", // Allow frontend access
-    methods: ["GET", "POST"]
-  }
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Basic error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
 
-// Simulated guard locations
-let guards = [
-  { id: 1, lat: 27.6139, lng: 75.209 }, // New Delhi
-  { id: 2, lat: 28.6139, lng: 77.209 }, // Mumbai
-  { id: 3, lat: 29.6139, lng: 79.209 } // Bangalore
-];
+// Create HTTP server
+const server = http.createServer(app);
 
-// Broadcast updated locations every 2 seconds
-setInterval(() => {
-  guards = guards.map(guard => ({
-    ...guard,
-    lat: guard.lat + (Math.random() - 0.5) * 0.01, // Simulate movement
-    lng: guard.lng + (Math.random() - 0.5) * 0.01
-  }));
-  
-  io.emit("guardLocations", guards);
-}, 1000);
+// Socket.io setup with error handling
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5174",
+    methods: ["GET", "POST"]
+  },
+  pingTimeout: 60000,
+  connectTimeout: 60000
+});
 
-io.on("connection", (socket) => {
-  console.log("A client connected");
+// Handle socket server errors
+io.engine.on("connection_error", (err) => {
+  console.log('Connection error:', err);
+});
 
-  // Send initial data
-  socket.emit("guardLocations", guards);
+// Initialize socket server
+initSocketServer(io);
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected");
+// Start server
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('Server error:', error);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  // Graceful shutdown
+  server.close(() => {
+    process.exit(1);
   });
 });
 
-server.listen(5000, () => console.log("Server running on port 5000"));
+// Handle unhandled rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
