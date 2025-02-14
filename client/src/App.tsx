@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 import MapComponent from "./components/MapComponent";
@@ -73,10 +75,11 @@ const RoomWrapper = () => {
 function App() {
   const setSocket = useSocketStore((state) => state.setSocket);
   const socket = useSocketStore((state) => state.socket);
+  const BACKENDURL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
   useEffect(() => {
     if (!socket) {
-      const newSocket = io("http://localhost:5000");
+      const newSocket = io(BACKENDURL);
       setSocket(newSocket);
 
       return () => {
