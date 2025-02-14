@@ -5,8 +5,8 @@ import { io } from "socket.io-client";
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './pages/login';
 import SignUp from './pages/signUp';
-import Dashboard ,{RoomWrapper} from "./pages/Dashboard";
-
+import Dashboard from "./pages/Dashboard";
+import { RoomWrapper } from "./pages/Org";
 
 function App() {
   const setSocket = useSocketStore((state) => state.setSocket);
@@ -27,7 +27,8 @@ function App() {
     return (
     <Router>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/room/:orgId/*" element={<RoomWrapper />} />
