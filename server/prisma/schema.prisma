@@ -16,6 +16,7 @@ enum Role {
 
 model User {
   id          Int         @id @default(autoincrement())
+  clerkUserId String      @unique  // The external Clerk user ID from your Clerk session
   email       String      @unique
   password    String
   name        String?
