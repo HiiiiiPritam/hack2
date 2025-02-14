@@ -1,10 +1,10 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './pages/dashboard';
+import Dashboard from './pages/Dashboard';
 import Login from './pages/login';
 import SignUp from './pages/signUp';
 // import JoinRoom from './pages/joinRoom';
-import {RoomWrapper} from './pages/dashboard';
+import {RoomWrapper} from './pages/Dashboard';
 
 function App() {
   return (
