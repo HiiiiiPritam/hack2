@@ -18,27 +18,17 @@
     "framer-motion": "^11.5.4",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.475.0",
-<<<<<<< HEAD
     "path": "^0.12.7",
-=======
->>>>>>> 52dbccb7090215216fcac5f5fcfd3474187fff50
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.4.0",
     "react-leaflet": "^4.2.1",
-<<<<<<< HEAD
-    "react-router-dom": "^6.26.1",
-    "socket.io-client": "^4.8.1",
-    "tailwind-merge": "^3.0.1",
-    "tailwindcss-animate": "^1.0.7"
-=======
     "react-router-dom": "^6.29.0",
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.0.1",
     "tailwind-variants": "^0.3.1",
     "tailwindcss-animate": "^1.0.7",
     "zustand": "^5.0.3"
->>>>>>> 52dbccb7090215216fcac5f5fcfd3474187fff50
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
