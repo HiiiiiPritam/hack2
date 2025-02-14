@@ -22,24 +22,46 @@ let guards = [
 ];
 
 // Broadcast updated locations every 2 seconds
-setInterval(() => {
-  guards = guards.map(guard => ({
-    ...guard,
-    lat: guard.lat + (Math.random() - 0.5) * 0.01, // Simulate movement
-    lng: guard.lng + (Math.random() - 0.5) * 0.01
-  }));
+// setInterval(() => {
+//   guards = guards.map(guard => ({
+//     ...guard,
+//     lat: guard.lat + (Math.random() - 0.5) * 0.01, // Simulate movement
+//     lng: guard.lng + (Math.random() - 0.5) * 0.01
+//   }));
   
-  io.emit("guardLocations", guards);
-}, 1000);
+//   io.emit("guardLocations", guards);
+// }, 1000);
 
 io.on("connection", (socket) => {
-  console.log("A client connected");
+  console.log("A new guard connected:", socket.id);
 
-  // Send initial data
-  socket.emit("guardLocations", guards);
+  // Handle new guard joining
+  socket.on("joinGuard", ({ lat, lng }) => {
+    const newGuard = {
+      id: socket.id,
+      name: `Guard ${guards.length + 1}`,
+      lat,
+      lng
+    };
 
+    guards.push(newGuard);
+    io.emit("updateGuards", guards);
+  });
+
+  // Handle real-time location updates
+  socket.on("updateLocation", ({ lat, lng }) => {
+    guards = guards.map((guard) =>
+      guard.id === socket.id ? { ...guard, lat, lng } : guard
+    );
+
+    io.emit("updateGuards", guards);
+  });
+
+  // Handle guard disconnect
   socket.on("disconnect", () => {
-    console.log("Client disconnected");
+    console.log(`Guard ${socket.id} disconnected`);
+    guards = guards.filter((guard) => guard.id !== socket.id);
+    io.emit("removeGuard", socket.id);
   });
 });
 
