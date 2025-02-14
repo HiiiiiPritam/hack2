@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import MapComponent from "./components/MapComponent";
+import MapComponent from "@/components/MapComponent";
 import { useSocketStore } from "./zustand/useSocketStore"; // ✅ Fix Import
-import { io } from "socket.io-client";
+import io from "socket.io-client";
 
 const JoinRoom = () => {
   const [room, setRoom] = React.useState("");
@@ -32,10 +32,31 @@ const JoinRoom = () => {
 
 const RoomPage = ({ room }: { room: string }) => {
   const navigate = useNavigate();
+  const socket = useSocketStore((state) => state.socket);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (socket) {
+      // ✅ Listen for the alert event
+      socket.on("guardAlert", (message : string) => {
+        console.log("Alert received:", message);
+        setAlertMessage(message);
+      });
+
+      return () => {
+        socket.off("guardAlert"); // ✅ Clean up the listener when unmounting
+      };
+    }
+  }, [socket]);
 
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h1>Room: {room}</h1>
+      {/* {alertMessage && (
+        <div style={{ backgroundColor: "red", color: "white", padding: "10px", margin: "10px 0" }}>
+          🚨 Alert: {alertMessage}
+        </div>
+      )} */}
       <div>
         <button onClick={() => navigate(`/room/${room}/map`)}>Map</button>
         <button>Other Tab</button>

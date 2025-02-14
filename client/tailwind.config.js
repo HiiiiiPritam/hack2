@@ -1,15 +1,15 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
+  darkMode: ["class"],
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-    // Include components from shadcn
-    "./node_modules/@shadcn/ui/dist/**/*.{js,ts,jsx,tsx}"
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
   ],
+  prefix: "",
   theme: {
     extend: {},
   },
-  plugins: [
-    require("tailwindcss-animate") // Enables shadcn animations
-  ],
-};
+  plugins: [require("tailwindcss-animate")],
+}

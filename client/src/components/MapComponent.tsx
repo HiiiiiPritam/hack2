@@ -35,7 +35,7 @@ const MapComponent: React.FC = () => {
           setMyLocation({lat: latitude, lng: longitude });
 
           // Send location to server
-          socket.emit("joinGuard", {orgId : orgId as string,lat: latitude, lng: longitude, radius: 0.1 });
+          socket.emit("joinGuard", {orgId : orgId as string,lat: latitude, lng: longitude, radius: 0.001 });
         },
         (error) => console.error("Error getting location:", error),
         { enableHighAccuracy: true }
