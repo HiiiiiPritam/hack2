@@ -5,7 +5,6 @@ import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
 import { initSocketServer } from "./socket/socketServer.js";
-
 dotenv.config();
 
 // Express app setup
@@ -14,6 +13,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+
 
 // Basic error handling middleware
 app.use((err, req, res, next) => {

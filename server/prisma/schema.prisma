@@ -11,12 +11,11 @@ datasource db {
 model User {
   id                      Int                      @id @default(autoincrement())
   email                   String                   @unique
+  name                    String
   password                String
-  name                    String?
-  role                    Role
   createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
-  clerkUserId             String                   @unique
+  updatedAt               DateTime                 @default(now())
+
   sentAlerts              Alert[]                  @relation("UserAlerts")
   backgroundCheckRequests BackgroundCheckRequest[] @relation("UserBackgroundRequests")
   chatMessages            ChatMessage[]            @relation("UserChatMessages")
@@ -25,6 +24,7 @@ model User {
   reviews                 Review[]
 }
 
+
 model Organization {
   id                      Int                      @id @default(autoincrement())
   name                    String
@@ -32,7 +32,7 @@ model Organization {
   joinPassword            String
   ownerId                 Int
   createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  updatedAt               DateTime                 @default(now())
   alerts                  Alert[]
   backgroundCheckRequests BackgroundCheckRequest[]
   chatMessages            ChatMessage[]
@@ -61,7 +61,7 @@ model Guard {
   name                    String
   contact                 String?
   createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  updatedAt               DateTime                 @default(now())
   attendances             Attendance[]
   backgroundCheckRequests BackgroundCheckRequest[]
   chatMessages            ChatMessage[]            @relation("GuardChatMessages")
@@ -83,7 +83,7 @@ model GuardPersonalInfo {
   pastWorkHistory   Json?
   currentDeployment String?
   createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  updatedAt         DateTime  @default(now())
   guard             Guard     @relation(fields: [guardId], references: [id])
 }
 
@@ -105,7 +105,7 @@ model Shift {
   startTime         DateTime
   endTime           DateTime
   createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
+  updatedAt         DateTime               @default(now())
   attendances       Attendance[]           @relation("ShiftAttendances")
   locationHistories GuardLocationHistory[] @relation("ShiftLocationHistories")
   organization      Organization           @relation(fields: [organizationId], references: [id])
@@ -144,6 +144,7 @@ model Alert {
   description    String
   alertType      String
   createdAt      DateTime     @default(now())
+  seen           Boolean      @default(false)
   senderId       Int?
   organization   Organization @relation(fields: [organizationId], references: [id])
   sender         User?        @relation("UserAlerts", fields: [senderId], references: [id])
@@ -156,7 +157,7 @@ model BackgroundCheckRequest {
   requestedById  Int
   status         String
   createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  updatedAt      DateTime     @default(now())
   guard          Guard        @relation(fields: [guardId], references: [id])
   organization   Organization @relation(fields: [organizationId], references: [id])
   requestedBy    User         @relation("UserBackgroundRequests", fields: [requestedById], references: [id])
