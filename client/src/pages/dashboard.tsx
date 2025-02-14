@@ -116,7 +116,7 @@ const JoinRoom = () => {
   
 
 // A wrapper to extract the room ID from the URL and render the room page
-const RoomWrapper = () => {
+export const RoomWrapper = () => {
   const roomId = window.location.pathname.split("/")[2];
   return <RoomPage room={roomId} />;
 };
@@ -138,13 +138,8 @@ const Dashboard = () => {
   }, [setSocket, socket, BACKENDURL]);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<JoinRoom />} />
-        <Route path="/room/:orgId/*" element={<RoomWrapper />} />
-      </Routes>
-    </Router>
-  );
+    <JoinRoom />
+  )
 };
 
 export default Dashboard;
