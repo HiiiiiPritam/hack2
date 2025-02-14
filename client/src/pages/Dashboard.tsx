@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import MapComponent from "@/components/MapComponent";
 import { useSocketStore } from "@/zustand/useSocketStore";
 import io from "socket.io-client";
 
