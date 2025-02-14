@@ -1,137 +1,105 @@
-// socketServer.js
+import { Server } from "socket.io";
+import { v4 as uuidv4 } from "uuid";
+
+// Simulated database for organizations and guards
+const organizations = {}; // { orgId: roomId }
+const guards = {}; // { socketId: { id, name, lat, lng, orgId, radius } }
+
 export const initSocketServer = (io) => {
-  // Guard locations data with more detailed information
-  let guards = [
-    { 
-      id: 'guard-1',
-      name: "Guard 1",
-      lat: 27.6139,
-      lng: 75.209,
-      status: "active",
-      lastUpdate: new Date().toISOString()
-    },
-    {
-      id: 'guard-2',
-      name: "Guard 2",
-      lat: 28.6139,
-      lng: 77.209,
-      status: "active",
-      lastUpdate: new Date().toISOString()
-    },
-    {
-      id: 'guard-3',
-      name: "Guard 3",
-      lat: 29.6139,
-      lng: 79.209,
-      status: "active",
-      lastUpdate: new Date().toISOString()
-    }
-  ];
-
-  // Store connected clients
-  const connectedClients = new Set();
-
-  // Socket connection handling
   io.on("connection", (socket) => {
-    try {
-      console.log("Client connected:", socket.id);
-      connectedClients.add(socket.id);
+    console.log(`Client connected: ${socket.id}`);
 
-      // Send initial guard locations
-      socket.emit("guardLocations", guards);
-
-      // Handle new guard joining
-      socket.on("joinGuard", ({ lat, lng }) => {
-        try {
-          const newGuard = {
-            id: socket.id,
-            name: `Guard ${guards.length + 1}`,
-            lat,
-            lng,
-            status: "active",
-            lastUpdate: new Date().toISOString()
-          };
-
-          guards.push(newGuard);
-          io.emit("updateGuards", guards);
-        } catch (error) {
-          console.error('Error in joinGuard handler:', error);
-        }
-      });
-
-      // Handle real-time location updates
-      socket.on("updateLocation", ({ lat, lng }) => {
-        try {
-          guards = guards.map((guard) =>
-            guard.id === socket.id 
-              ? { 
-                  ...guard, 
-                  lat, 
-                  lng, 
-                  lastUpdate: new Date().toISOString() 
-                } 
-              : guard
-          );
-
-          io.emit("updateGuards", guards);
-        } catch (error) {
-          console.error('Error in updateLocation handler:', error);
-        }
-      });
-
-      // Handle guard status updates
-      socket.on("updateGuardStatus", ({ guardId, status }) => {
-        try {
-          const guardIndex = guards.findIndex(g => g.id === guardId);
-          if (guardIndex !== -1) {
-            guards[guardIndex].status = status;
-            guards[guardIndex].lastUpdate = new Date().toISOString();
-            io.emit("updateGuards", guards);
-          }
-        } catch (error) {
-          console.error('Error in updateGuardStatus handler:', error);
-        }
-      });
-
-      // Handle guard disconnect
-      socket.on("disconnect", (reason) => {
-        console.log(`Guard ${socket.id} disconnected. Reason: ${reason}`);
-        guards = guards.filter((guard) => guard.id !== socket.id);
-        connectedClients.delete(socket.id);
-        io.emit("removeGuard", socket.id);
-      });
-
-      // Handle errors
-      socket.on("error", (error) => {
-        console.error("Socket error:", error);
-      });
-
-    } catch (error) {
-      console.error('Error in socket connection handler:', error);
-    }
-  });
-
-  // Optional: Simulate guard movement
-  const locationUpdateInterval = setInterval(() => {
-    try {
-      guards = guards.map(guard => ({
-        ...guard,
-        lat: guard.lat + (Math.random() - 0.5) * 0.01,
-        lng: guard.lng + (Math.random() - 0.5) * 0.01,
-        lastUpdate: new Date().toISOString()
-      }));
-
-      if (connectedClients.size > 0) {
-        io.emit("updateGuards", guards);
+    // When an organization is created, store the room ID
+    socket.on("createOrganization", ({ orgId }) => {
+      if (!organizations[orgId]) {
+        organizations[orgId] = uuidv4(); // Assign a unique room ID
+        console.log(`Organization ${orgId} created with Room ID ${organizations[orgId]}`);
       }
-    } catch (error) {
-      console.error('Error updating guard locations:', error);
-    }
-  }, 1000);
+      else{
+         console.log(`Organization ${orgId} already exists`);
+      }
+    });
 
-  // Return cleanup function
-  return () => {
-    clearInterval(locationUpdateInterval);
-    io.close();
-  };
+    // Join a guard to an organization room
+    socket.on("joinGuard", ({ orgId, lat, lng, radius }) => {
+      const roomId = organizations[orgId];
+      console.log(`Guard ${socket.id} joining Room: ${roomId} with orgId: ${orgId} and lat: ${lat} and lng: ${lng} and radius: ${radius}`);
+      
+      if (!roomId) {
+        socket.emit("error", { message: "Organization not found" });
+        return;
+      }
+
+      // Add guard to the room
+      socket.join(roomId);
+      guards[socket.id] = { id: socket.id, name: `Guard ${Object.keys(guards).length + 1}`, lat, lng, radius, orgId };
+
+      console.log(`Guard ${socket.id} joined Room: ${roomId}`);
+
+      // await simulateGuardMovement(socket, io);
+
+      // Send updated list of guards to the room
+      io.to(roomId).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === orgId));
+    });
+
+    // Update guard location and check geofence
+    socket.on("updateLocation", ({ lat, lng }) => {
+      const guard = guards[socket.id];
+      if (!guard) return;
+
+      guard.lat = lat;
+      guard.lng = lng;
+      guard.lastUpdate = new Date().toISOString();
+
+      // Check if guard moves out of assigned area
+      const distance = Math.sqrt((lat - guard.lat) ** 2 + (lng - guard.lng) ** 2);
+      if (distance > guard.radius) {
+        io.to(organizations[guard.orgId]).emit("alert", {
+          message: `${guard.name} has moved outside the allowed area!`,
+        });
+      }
+
+      io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+    });
+
+
+
+    // Handle disconnect
+    socket.on("disconnect", () => {
+      const guard = guards[socket.id];
+      if (guard) {
+        delete guards[socket.id];
+        io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+      }
+      console.log(`Guard ${socket.id} disconnected`);
+    });
+  });
 };
+
+// function simulateGuardMovement(socket, io) {
+//   let guard = guards[socket.id];
+//   if (!guard) return;
+
+//   const interval = setInterval(() => {
+//     if (!guards[socket.id]) {
+//       clearInterval(interval);
+//       return;
+//     }
+
+//     // Move guard slightly
+//     guard.lat += (Math.random() - 0.5) * 0.1; // Small movement
+//     guard.lng += (Math.random() - 0.5) * 0.1;
+
+//     // Emit location update
+//     io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+
+//     // Check if out of bounds
+//     const distance = Math.sqrt((guard.lat - guard.lat) ** 2 + (guard.lng - guard.lng) ** 2);
+//     if (distance > guard.radius) {
+//       io.to(organizations[guard.orgId]).emit("alert", {
+//         message: `${guard.name} has moved outside the allowed area! 🚨`,
+//       });
+//       clearInterval(interval); // Stop further movement after alert
+//     }
+//   }, 1000); // Moves every 5 seconds
+// }
