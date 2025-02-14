@@ -23,6 +23,7 @@ const MapComponent: React.FC = () => {
   const [guards, setGuards] = useState<Guard[]>([]);
   const { orgId } = useParams<{ orgId: string }>();
   const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
 
   useEffect(() => {
     if (!socket) return;
@@ -37,8 +38,19 @@ const MapComponent: React.FC = () => {
           const { latitude, longitude } = position.coords;
           setMyLocation({ lat: latitude, lng: longitude });
 
+          console.log(`My current latitude longitude`,latitude,longitude);
+
           // Send updated location to server
-          socket.emit("updateLocation", { lat: latitude, lng: longitude});
+          socket.emit("updateLocation", {
+            orgId,
+            lat: latitude,
+            lng: longitude,
+            radius: 0.001,
+          });
+          if (!isJoined) {
+            setIsJoined(true);
+            console.log("Joined organization and started location updates.");
+          }
         },
         (error) => console.error("Error watching location:", error),
         { enableHighAccuracy: true, maximumAge: 10000 }
@@ -57,8 +69,9 @@ const MapComponent: React.FC = () => {
     return () => {
       socket.off("updateGuards");
       socket.off("removeGuard");
+      if (watchId) navigator.geolocation.clearWatch(watchId); // Clear location watcher on unmount
     };
-  }, [socket]);
+  }, [socket, orgId, isJoined]);
 
   return (
     <MapContainer center={myLocation || [28.6139, 77.209]} zoom={13} style={{ height: "100vh", width: "100%" }}>

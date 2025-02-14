@@ -13,18 +13,21 @@ export const initSocketServer = (io) => {
     socket.on("createOrganization", ({ orgId }) => {
       if (!organizations[orgId]) {
         organizations[orgId] = uuidv4(); // Assign a unique room ID
-        console.log(`Organization ${orgId} created with Room ID ${organizations[orgId]}`);
-      }
-      else{
-         console.log(`Organization ${orgId} already exists`);
+        console.log(
+          `Organization ${orgId} created with Room ID ${organizations[orgId]}`
+        );
+      } else {
+        console.log(`Organization ${orgId} already exists`);
       }
     });
 
     // Join a guard to an organization room
     socket.on("joinGuard", ({ orgId, lat, lng, radius }) => {
       const roomId = organizations[orgId];
-      console.log(`Guard ${socket.id} joining Room: ${roomId} with orgId: ${orgId} and lat: ${lat} and lng: ${lng} and radius: ${radius}`);
-      
+      console.log(
+        `Guard ${socket.id} joining Room: ${roomId} with orgId: ${orgId} and lat: ${lat} and lng: ${lng} and radius: ${radius}`
+      );
+
       if (!roomId) {
         socket.emit("error", { message: "Organization not found" });
         return;
@@ -32,44 +35,89 @@ export const initSocketServer = (io) => {
 
       // Add guard to the room
       socket.join(roomId);
-      guards[socket.id] = { id: socket.id, name: `Guard ${Object.keys(guards).length + 1}`, lat, lng, radius, orgId };
+      guards[socket.id] = {
+        id: socket.id,
+        name: `Guard ${Object.keys(guards).length + 1}`,
+        lat,
+        lng,
+        radius,
+        orgId,
+      };
 
       console.log(`Guard ${socket.id} joined Room: ${roomId}`);
 
       // await simulateGuardMovement(socket, io);
 
       // Send updated list of guards to the room
-      io.to(roomId).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === orgId));
+      io.to(roomId).emit(
+        "updateGuards",
+        Object.values(guards).filter((g) => g.orgId === orgId)
+      );
     });
 
     // Update guard location and check geofence
-    socket.on("updateLocation", ({ lat, lng }) => {
+    socket.on("updateLocation", ({ orgId, lat, lng, radius }) => {
       const guard = guards[socket.id];
-      if (!guard) return;
 
-      guard.lat = lat;
-      guard.lng = lng;
-      guard.lastUpdate = new Date().toISOString();
 
-      // Check if guard moves out of assigned area
-      const distance = Math.sqrt((lat - guard.lat) ** 2 + (lng - guard.lng) ** 2);
-      if (distance > guard.radius) {
-        io.to(organizations[guard.orgId]).emit("alert", {
-          message: `${guard.name} has moved outside the allowed area!`,
-        });
+      if (!guard) {
+        // If not joined, first join the guard
+        const roomId = organizations[orgId];
+        if (!roomId) {
+          socket.emit("error", { message: "Organization not found" });
+          return;
+        }
+
+        console.log(orgId,lat, lng,radius)
+        
+        socket.join(roomId);
+        guards[socket.id] = {
+          id: socket.id,
+          name: `Guard ${Object.keys(guards).length + 1}`,
+          lat,
+          lng,
+          radius,
+          orgId,
+        };
+        console.log(
+          `Guard ${socket.id} joined Room: ${roomId} at (${lat}, ${lng})`
+        );
+      } else {
+        // If already joined, just update location
+        guard.lat = lat;
+        guard.lng = lng;
+        guard.lastUpdate = new Date().toISOString();
+
+        console.log(orgId,lat, lng)
+
+        // Check if guard moves out of assigned area
+        const distance = Math.sqrt(
+          (lat - guard.lat) ** 2 + (lng - guard.lng) ** 2
+        );
+        if (distance > guard.radius) {
+          io.to(organizations[guard.orgId]).emit("alert", {
+            message: `${guard.name} has moved outside the allowed area!`,
+          });
+        }
+
+        console.log(`Guard ${socket.id} updated to(${lat}, ${lng})`);
       }
 
-      io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+      io.to(organizations[orgId]).emit(
+        "updateGuards",
+        Object.values(guards).filter((g) => g.orgId === orgId)
+      );
     });
-
-
 
     // Handle disconnect
     socket.on("disconnect", () => {
       const guard = guards[socket.id];
       if (guard) {
         delete guards[socket.id];
-        io.to(organizations[guard.orgId]).emit("updateGuards", Object.values(guards).filter((g) => g.orgId === guard.orgId));
+        io.to(organizations[guard.orgId]).emit(
+          "updateGuards",
+          Object.values(guards).filter((g) => g.orgId === guard.orgId)
+        );
       }
       console.log(`Guard ${socket.id} disconnected`);
     });
