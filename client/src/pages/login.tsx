@@ -1,6 +1,6 @@
 // src/components/Login.tsx
 import React, { useState } from 'react';
-import { supabase } from '../helper/superBaseClient';
+import { supabase } from '../lib/helper/superBaseClient';
 import { useNavigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -14,7 +14,7 @@ const Login: React.FC = () => {
     setError(null);
 
     // Log in the user using Supabase Auth.
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({
+    const { error: loginError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -29,9 +29,9 @@ const Login: React.FC = () => {
 
     // Redirect based on the selected role.
     if (role === 'admin') {
-      navigate('/admin-dashboard');
+      navigate('/dashboard');
     } else {
-      navigate('/member-dashboard');
+      navigate('/dashboard');
     }
   };
 
