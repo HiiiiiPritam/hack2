@@ -59,6 +59,8 @@ const MapComponent: React.FC = () => {
 
     // Listen for guard updates
     socket.on("updateGuards", (updatedGuards: Guard[]) => {
+      console.log("Received updated guards:", updatedGuards);
+      
       setGuards(updatedGuards);
     });
 

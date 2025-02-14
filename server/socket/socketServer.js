@@ -6,6 +6,7 @@ const organizations = {}; // { orgId: roomId }
 const guards = {}; // { socketId: { id, name, lat, lng, orgId, radius } }
 
 export const initSocketServer = (io) => {
+  console.log("Socket.io server initialized");
   io.on("connection", (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
@@ -57,20 +58,24 @@ export const initSocketServer = (io) => {
 
     // Update guard location and check geofence
     socket.on("updateLocation", ({ orgId, lat, lng, radius }) => {
-      const guard = guards[socket.id];
-
-
+      let guard = guards[socket.id]; // Get existing guard
+      
+      console.log("Top mei", orgId, lat, lng, radius);
+      
       if (!guard) {
         // If not joined, first join the guard
         const roomId = organizations[orgId];
+        console.log(
+          `Guard ${socket.id} joining Room: ${roomId} with orgId: ${orgId} and lat: ${lat} and lng: ${lng} and radius: ${radius}`
+        )
         if (!roomId) {
           socket.emit("error", { message: "Organization not found" });
           return;
         }
-
-        console.log(orgId,lat, lng,radius)
-        
-        socket.join(roomId);
+    
+        console.log(orgId, lat, lng, radius);
+    
+        // Assign guard **before** calculating distance
         guards[socket.id] = {
           id: socket.id,
           name: `Guard ${Object.keys(guards).length + 1}`,
@@ -79,6 +84,9 @@ export const initSocketServer = (io) => {
           radius,
           orgId,
         };
+        guard = guards[socket.id]; // Now guard is defined
+    
+        socket.join(roomId);
         console.log(
           `Guard ${socket.id} joined Room: ${roomId} at (${lat}, ${lng})`
         );
@@ -87,27 +95,24 @@ export const initSocketServer = (io) => {
         guard.lat = lat;
         guard.lng = lng;
         guard.lastUpdate = new Date().toISOString();
-
-        console.log(orgId,lat, lng)
-
-        // Check if guard moves out of assigned area
-        const distance = Math.sqrt(
-          (lat - guard.lat) ** 2 + (lng - guard.lng) ** 2
-        );
-        if (distance > guard.radius) {
-          io.to(organizations[guard.orgId]).emit("alert", {
-            message: `${guard.name} has moved outside the allowed area!`,
-          });
-        }
-
-        console.log(`Guard ${socket.id} updated to(${lat}, ${lng})`);
       }
-
-      io.to(organizations[orgId]).emit(
+    
+      // Now guard is guaranteed to exist, so we can calculate distance
+      const distance = Math.sqrt((lat - guard.lat) ** 2 + (lng - guard.lng) ** 2);
+    
+      if (distance > guard.radius) {
+        io.to(organizations[guard.orgId]).emit("alert", {
+          message: `${guard.name} has moved outside the allowed area!`,
+        });
+      }
+    
+      console.log(`Guard ${socket.id} updated to(${lat}, ${lng})`);
+    
+      io.to(organizations[guard.orgId]).emit(
         "updateGuards",
-        Object.values(guards).filter((g) => g.orgId === orgId)
+        Object.values(guards).filter((g) => g.orgId === guard.orgId)
       );
-    });
+    }); 
 
     // Handle disconnect
     socket.on("disconnect", () => {
