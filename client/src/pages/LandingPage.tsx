@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Button } from "@/components/ui/button";
 import { FaMapMarkerAlt, FaShieldAlt, FaUsers, FaExclamationTriangle } from "react-icons/fa";
 
@@ -44,7 +44,7 @@ const LandingPage = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, description }) => {
+const FeatureCard = ({ icon, title, description }:{ icon: React.ReactNode, title: string, description: string }) => {
   return (
     <div className="p-6 bg-white rounded-lg shadow-md text-center flex flex-col items-center">
       {icon}

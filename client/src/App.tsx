@@ -7,6 +7,7 @@ import Login from './pages/login';
 import SignUp from './pages/signUp';
 import Dashboard from "./pages/Dashboard";
 import { RoomWrapper } from "./pages/Org";
+import LandingPage from "./pages/LandingPage";
 
 function App() {
   const setSocket = useSocketStore((state) => state.setSocket);
@@ -27,7 +28,7 @@ function App() {
     return (
     <Router>
       <Routes>
-
+        <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
