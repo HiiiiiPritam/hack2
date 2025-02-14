@@ -1,8 +1,8 @@
+// index.js
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import cors from "cors";
-import initSocketServer from "./socket/socketServer";
 import dotenv from "dotenv";
 
 // Express app setup
@@ -36,8 +36,44 @@ io.engine.on("connection_error", (err) => {
   console.log('Connection error:', err);
 });
 
-// Initialize socket server
-initSocketServer(io);
+// Simulated guard locations
+let guards = [
+  { id: 1, lat: 27.6139, lng: 75.209 }, // New Delhi
+  { id: 2, lat: 28.6139, lng: 77.209 }, // Mumbai
+  { id: 3, lat: 29.6139, lng: 79.209 } // Bangalore
+];
+
+// Socket connection handling
+io.on("connection", (socket) => {
+  console.log("A new guard connected:", socket.id);
+
+  // Handle new guard joining
+  socket.on("joinGuard", ({ lat, lng }) => {
+    const newGuard = {
+      id: socket.id,
+      name: `Guard ${guards.length + 1}`,
+      lat,
+      lng
+    };
+    guards.push(newGuard);
+    io.emit("updateGuards", guards);
+  });
+
+  // Handle real-time location updates
+  socket.on("updateLocation", ({ lat, lng }) => {
+    guards = guards.map((guard) =>
+      guard.id === socket.id ? { ...guard, lat, lng } : guard
+    );
+    io.emit("updateGuards", guards);
+  });
+
+  // Handle guard disconnect
+  socket.on("disconnect", () => {
+    console.log(`Guard ${socket.id} disconnected`);
+    guards = guards.filter((guard) => guard.id !== socket.id);
+    io.emit("removeGuard", socket.id);
+  });
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;
