@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { v4 as uuidv4 } from "uuid";
 
 // Simulated database for organizations and guards
-const organizations = {}; // { orgId: roomId }
+const organizations = {};
 const guards = {}; // { socketId: { id, name, lat, lng, orgId, radius } }
 
 export const initSocketServer = (io) => {
