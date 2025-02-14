@@ -54,11 +54,11 @@ const RoomPage = ({ room }: { room: string }) => {
   return (
     <div style={{ textAlign: "center", padding: "20px" }}>
       <h1>Room: {room}</h1>
-      {/* {alertMessage && (
+      {alertMessage && (
         <div style={{ backgroundColor: "red", color: "white", padding: "10px", margin: "10px 0" }}>
           🚨 Alert: {alertMessage}
         </div>
-      )} */}
+      )}
       <div>
         <button onClick={() => navigate(`/room/${room}/map`)}>Map</button>
         <button>Other Tab</button>
